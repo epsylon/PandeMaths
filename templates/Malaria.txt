@@ -1,0 +1,3 @@
+duration:21
+contagion:41
+recov:12

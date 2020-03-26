@@ -1,0 +1,19 @@
+E:Exposed individuals
+δ:Average time of temporary immunity
+μ:Average death rate (probability of an infected individual dying from the disease)
+Ia:Asymptomatic infected individuals
+f:Average rate of loss of immunity in recovered individuals
+B:Average birth rate
+M:Infants with passive immunity
+δ:Average time of temporary immunity
+1/ε:Average incubation time
+Hp:Level of previous health status of the population
+rIm:Collective Immunity Ratio
+PoVp:Poverty level of the population
+Fakep:Level of media manipulation ("fake news") to which the population is subjected
+Edup:Educational level of the population
+Purp:Average rate of purchasing power of the population
+pPHS:Average rate of privatization of public health services
+PS:Level of political stability
+GDP:Gross Domestic Product
+CDL:Country Debt level

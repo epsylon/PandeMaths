@@ -1,0 +1,9 @@
+T:Total population
+S:Susceptible (healthy individuals who do not carry the disease, but who could be infected)
+I:Infected (individuals who carry the disease and can transmit it)
+A:Recovered (individuals who heal and become immunized)
+D:Deceased (individuals who have died)
+1/i:Average interaction between individuals
+1/γ:Average infection time (for a single individual)
+β:Rate of infection (probability of a person becoming ill when in contact with an infected person)
+r:Average recovery rate (for a single individual)
