@@ -7,8 +7,8 @@ You should have received a copy of the GNU General Public License along
 with PandeMaths; if not, write to the Free Software Foundation, Inc., 51
 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
-VERSION = "v0.1_beta"
-RELEASE = "25032020"
+VERSION = "v0.2_beta"
+RELEASE = "27032020"
 SOURCE1 = "https://code.03c8.net/epsylon/pandemaths"
 SOURCE2 = "https://github.com/epsylon/pandemaths"
 CONTACT = "epsylon@riseup.net - (https://03c8.net)"
@@ -18,7 +18,7 @@ extended_model_variables_path = "model/extended.txt" # extended model variables 
 simulation_templates_path = "templates/" # templates files
 reports_path = "reports/" # reports files
 
-import json, datetime, os, random
+import json, datetime, os, random, sys
 
 def model_maths():
     print("[Info] Reviewing Model ...\n")
@@ -212,15 +212,33 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
     day_started = False
     for i in range(0, days):
         if i > 0:
-            status_rate = round(int(infected*100/total_population))
+            try:
+                status_rate = round(int(infected*100/total_population))
+            except:
+                status_rate = 100
             if status_rate < 11: # ENDEMIA (-11%)
-                status = "IMPACT LEVEL: ENDEMIC!"
-            elif status_rate > 10 and status_rate < 30: # EPIDEMIA (>10%<30%)
-                status = "IMPACT LEVEL: EPIDEMIC!"
-            else: # PANDEMIA (>30%)
-                status = "IMPACT LEVEL: PANDEMIC!"
+                if susceptible > 0:
+                    status = "IMPACT LEVEL: ENDEMIC!"
+                else:
+                    if int(total_population*100/starting_population) > 49:
+                        status = "PRACTICALLY ERRADICATED BUT AT LEAST HALF OF THE POPULATION HAS DIED!"
+                    else:
+                        status = "PRACTICALLY ERRADICATED!"
+            elif status_rate > 10 and status_rate < 25: # EPIDEMIA (>10%<25%)
+                if susceptible > 0:
+                    status = "IMPACT LEVEL: EPIDEMIC!"
+                else:
+                    status = "IMPORTANT FOCUS OF INCUBATION!"
+            else: # PANDEMIA (>25%)
+                if susceptible > 0:
+                    status = "IMPACT LEVEL: PANDEMIC!"
+                else:
+                    status = "MOSTLY OF THE POPULATION IS INCUBATING!"
             sir = susceptible+infected+recovered # S-I-R model
-            contagion = round(infected*daily_rate_interaction*susceptible/sir*probability_of_contagion) # contagion rounded rate
+            try:
+                contagion = round(infected*daily_rate_interaction*susceptible/sir*probability_of_contagion) # contagion rounded rate
+            except:
+                contagion = 100
             recoveries = round(infected*recovery_rate/average_rate_duration) # recoveries rounded rate
             deaths = round(infected*mortality/average_rate_duration) # deaths rounded rate
             susceptible = susceptible - contagion + recoveries - deaths
@@ -293,20 +311,21 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
             if infected > 0:
                 data['SIMULATION'][0]['DAY'] = str(i)
                 if total_non_affected > 0:
-                    if contagion > 0:
-                        print("  -> [DAY: "+str(i)+"]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")             
-                    else:
-                        print("  -> [DAY: "+str(i)+"]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
+                    print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")["+str(round(contagion/total_population*100))+"%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")["+str(round(susceptible/total_population*100))+"%] - Infected: ("+str(int(infected))+")["+str(round(infected/total_population*100))+"%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
+                    print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
                 else:
                     if entire_population_infected == 0:
                         total_contagion = starting_population
                         susceptible = 0
-                        status = "ALL INFECTED!"
-                        print("  -> [DAY: "+str(i)+"] -> [The entire population has been infected! ...]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
+                        status = "ALL INFECTED !!!"
+                        print("-"*75+"\n")
+                        print("  -> [DAY: "+str(i)+"] -> [ THE ENTIRE POPULATION HAS BEEN INFECTED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
                         entire_population_infected = entire_population_infected + 1
+                        print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
+                        print("-"*75+"\n")
                     else:
-                        print("  -> [DAY: "+str(i)+"]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
-                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") | Total Contagion: ("+str(int(total_contagion))+") | Total Recovered: (" +str(int(total_recovered))+") | Total Deceased: ("+str(int(total_deceased))+") | Total N/A: ("+str(int(total_non_affected))+")\n")
+                        print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
+                        print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
                 data['SIMULATION'][0]['Status'] = str(status)
                 data['SIMULATION'][0]['Contagion'] = str(int(contagion)) # generate json
                 data['SIMULATION'][0]['Recoveries'] = str(int(recoveries))
@@ -323,13 +342,15 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
                 with open(reports_path+'PandeMaths-report_'+str(current_time)+'.json', 'a', encoding='utf-8') as f: # append simulation into json
                     json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
             else: # population has passed the pandemia
-                status = "VACCINED"
+                status = "VACCINED!"
                 if entire_population_infected == 0:
                     total_contagion = starting_population
-                print("  -> [DAY: "+str(i)+"] -> [ No more infected! ...]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
-                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") | Total Contagion: ("+str(int(total_contagion))+") | Total Recovered: (" +str(int(total_recovered))+") | Total Deceased: ("+str(int(total_deceased))+") | Total N/A: ("+str(int(total_non_affected))+")\n")
+                print("-"*75+"\n")
+                print("  -> [DAY: "+str(i)+"] -> [ NO MORE INFECTED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[0%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[0%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
+                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
+                print("-"*75+"\n")
                 data['SIMULATION'][0]['DAY'] = str(i)
-                data['SIMULATION'][0]['Status'] = "[ No more infected! ... ]"
+                data['SIMULATION'][0]['Status'] = "[ NO MORE INFECTED! ]"
                 data['SIMULATION'][0]['Contagion'] = str(int(contagion)) # generate json
                 data['SIMULATION'][0]['Recoveries'] = str(int(recoveries))
                 data['SIMULATION'][0]['Deaths'] = str(int(deaths))
@@ -354,10 +375,10 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
                 susceptible = 0
                 total_population = 0
                 total_non_affected = 0
-                print("  -> [DAY: "+str(i)+"] -> [The entire population has died!...]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
-                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") | Total Contagion: ("+str(int(total_contagion))+") | Total Recovered: (" +str(int(total_recovered))+") | Total Deceased: ("+str(int(total_deceased))+") | Total N/A: ("+str(int(total_non_affected))+")\n")
+                print("  -> [DAY: "+str(i)+"] -> FATAL! [ THE ENTIRE POPULATION HAS DIED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")[0%] - Deaths: ("+str(int(deaths))+")[100%] - Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")[0%]")
+                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
                 data['SIMULATION'][0]['DAY'] = str(i)
-                data['SIMULATION'][0]['Status'] = "FATAL! [ The entire population has died! ... ]"
+                data['SIMULATION'][0]['Status'] = "FATAL! [ THE ENTIRE POPULATION HAS DIED! ]"
                 data['SIMULATION'][0]['Contagion'] = str(contagion)
                 data['SIMULATION'][0]['Recoveries'] = str(recoveries)
                 data['SIMULATION'][0]['Deaths'] = str(deaths)
@@ -378,8 +399,8 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         deaths = 0
         recoveries = 0
         contagion = 0
-    print("  -> [DAY: "+str(i)+"] -> [ SIMULATION END! ... ]\n      Status: ("+str(status)+") -> [Contagion: ("+str(int(contagion))+") | Recoveries: ("+str(int(recoveries))+") | Deaths: ("+str(int(deaths))+")] - [Susceptible: ("+str(int(susceptible))+") | Infected: ("+str(int(infected))+") | Recovered: ("+str(int(recovered))+") | Deceased: ("+str(int(deceased))+")]")
-    print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") | Total Contagion: ("+str(int(total_contagion))+") | Total Recovered: (" +str(int(total_recovered))+") | Total Deceased: ("+str(int(total_deceased))+") | Total N/A: ("+str(int(total_non_affected))+")\n")
+    print("  -> [DAY: "+str(i)+"] -> [ SIMULATION END! ]\n      Status: "+str(status))
+    print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
     data['SIMULATION'][0]['DAY'] = str(i)
     data['SIMULATION'][0]['Status'] = str(status)
     data['SIMULATION'][0]['Contagion'] = str(contagion)
@@ -402,10 +423,10 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
 def print_banner():
     print("\n"+"="*50)
     print(" ____                 _      __  __       _   _         ")
-    print("|  _ \ __ _ _ __   __| | ___|  \/  | __ _| |_| |__  ___ ")
-    print("| |_) / _` | '_ \ / _` |/ _ \ |\/| |/ _` | __| '_ \/ __|-2020")
-    print("|  __/ (_| | | | | (_| |  __/ |  | | (_| | |_| | | \__ /")
-    print("|_|   \__,_|_| |_|\__,_|\___|_|  |_|\__,_|\__|_| |_|___/-by psy")
+    print("-  _ \ __ _ _ __   __- - ___-  \/  - __ _- -_- -__  ___ ")
+    print("- -_) / _` - '_ \ / _` -/ _ \ -\/- -/ _` - __- '_ \/ __--2020")
+    print("-  __/ (_- - - - - (_- -  __/ -  - - (_- - -_- - - \__ /")
+    print("-_-   \__,_-_- -_-\__,_-\___-_-  -_-\__,_-\__-_- -_-___/-by psy")
     print('\n"Pandemics Extensible Mathematical Model"')
     print("\n"+"-"*15+"\n")
     print(" * VERSION: ")
@@ -420,7 +441,12 @@ def print_banner():
 
 # sub_init #
 print_banner() # show banner
-option = input("\n+ CHOOSE: (M)odel or (S)imulation: ").upper()
+try:
+    option = input("\n+ CHOOSE: (M)odel or (S)imulation: ").upper()
+except:
+    print("\n"+"="*50 + "\n")
+    print ("[Info] Try to run the tool with Python3.x.y... (ex: python3 pandemaths) -> [EXITING!]\n")
+    sys.exit()
 print("")
 print("="*50+"\n")
 if option == "S": # simulation
