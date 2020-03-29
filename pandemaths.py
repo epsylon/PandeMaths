@@ -7,8 +7,8 @@ You should have received a copy of the GNU General Public License along
 with PandeMaths; if not, write to the Free Software Foundation, Inc., 51
 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
-VERSION = "v0.2_beta"
-RELEASE = "27032020"
+VERSION = "v0.3_beta"
+RELEASE = "29032020"
 SOURCE1 = "https://code.03c8.net/epsylon/pandemaths"
 SOURCE2 = "https://github.com/epsylon/pandemaths"
 CONTACT = "epsylon@riseup.net - (https://03c8.net)"
@@ -19,6 +19,7 @@ simulation_templates_path = "templates/" # templates files
 reports_path = "reports/" # reports files
 
 import json, datetime, os, random, sys
+import matplotlib.pyplot as plt
 
 def model_maths():
     print("[Info] Reviewing Model ...\n")
@@ -170,9 +171,9 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
     infected = infected_starting
     susceptible_starting = int(total_population) - int(infected)
     susceptible = susceptible_starting # susceptitble at start
-    print("   + Susceptible: "+str(susceptible))
     recovered = 0 # recovered individuals at start
     deceased = 0 # deceases individuals at start
+    print("   + Susceptible: "+str(susceptible))
     print("   + Recovered: "+str(recovered))
     print("   + Deceased: "+str(deceased))
     print("\n"+"-"*15+"\n")
@@ -208,8 +209,37 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         {}
       ]
     }
+    if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
+        os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
+    with open(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".txt"), 'a', encoding='utf-8') as f: # append into txt
+        f.write("="*50+os.linesep)
+        f.write("Simulation Name:"+str(simulation_name)+os.linesep)
+        f.write("Infected (at the beginning):"+str(infected_starting)+os.linesep)
+        f.write("Number of days:"+str(days)+os.linesep)
+        f.write("Daily rate of interaction between individuals:"+str(daily_rate_interaction)+os.linesep)
+        f.write("Average duration of illness:"+str(average_rate_duration)+os.linesep)
+        f.write("Infection rate:"+str(probability_of_contagion)+os.linesep)
+        f.write("Recovery rate:"+str(recovery_rate)+os.linesep)
+        f.write("Mortality:"+str(mortality)+os.linesep)
+        f.write("Susceptible:"+str(susceptible)+os.linesep)
+        f.write("Recovered:"+str(recovered)+os.linesep)
+        f.write("Deceased:"+str(deceased)+os.linesep)
+        f.write("="*50+os.linesep)
     entire_population_infected = 0
     day_started = False
+    plot_starting_population = []
+    plot_days = []
+    plot_contagion = []
+    plot_recoveries = []
+    plot_deaths = []
+    plot_susceptible = []
+    plot_infected = []
+    plot_recovered = []
+    plot_total_population = []
+    plot_total_contagion = []
+    plot_total_recovered = []
+    plot_total_deceased = []
+    plot_total_non_affected = []
     for i in range(0, days):
         if i > 0:
             try:
@@ -309,7 +339,6 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
             infected = starting_population
         if total_population > 0:
             if infected > 0:
-                data['SIMULATION'][0]['DAY'] = str(i)
                 if total_non_affected > 0:
                     print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")["+str(round(contagion/total_population*100))+"%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")["+str(round(susceptible/total_population*100))+"%] - Infected: ("+str(int(infected))+")["+str(round(infected/total_population*100))+"%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
                     print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
@@ -326,49 +355,24 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
                     else:
                         print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
                         print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                data['SIMULATION'][0]['Status'] = str(status)
-                data['SIMULATION'][0]['Contagion'] = str(int(contagion)) # generate json
-                data['SIMULATION'][0]['Recoveries'] = str(int(recoveries))
-                data['SIMULATION'][0]['Deaths'] = str(int(deaths))
-                data['SIMULATION'][0]['Susceptible'] = str(int(susceptible))
-                data['SIMULATION'][0]['Infected'] = str(int(infected))
-                data['SIMULATION'][0]['Recovered'] = str(int(recovered))
-                data['SIMULATION'][0]['Deceased'] = str(int(deceased))
-                data['SIMULATION'][0]['Total Population'] = str(int(total_population))
-                data['SIMULATION'][0]['Total Contagion'] = str(int(total_contagion))
-                data['SIMULATION'][0]['Total Recovered'] = str(int(recovered))
-                data['SIMULATION'][0]['Total Deceased'] = str(int(total_deceased))
-                data['SIMULATION'][0]['Total N/A'] = str(int(total_non_affected))
-                with open(reports_path+'PandeMaths-report_'+str(current_time)+'.json', 'a', encoding='utf-8') as f: # append simulation into json
-                    json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
+                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
+                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
+                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
             else: # population has passed the pandemia
-                status = "VACCINED!"
+                status = "VACCINED! [ NO MORE INFECTED! ]"
                 if entire_population_infected == 0:
                     total_contagion = starting_population
                 print("-"*75+"\n")
                 print("  -> [DAY: "+str(i)+"] -> [ NO MORE INFECTED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[0%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[0%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
                 print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
                 print("-"*75+"\n")
-                data['SIMULATION'][0]['DAY'] = str(i)
-                data['SIMULATION'][0]['Status'] = "[ NO MORE INFECTED! ]"
-                data['SIMULATION'][0]['Contagion'] = str(int(contagion)) # generate json
-                data['SIMULATION'][0]['Recoveries'] = str(int(recoveries))
-                data['SIMULATION'][0]['Deaths'] = str(int(deaths))
-                data['SIMULATION'][0]['Susceptible'] = str(int(susceptible))
-                data['SIMULATION'][0]['Infected'] = str(int(infected))
-                data['SIMULATION'][0]['Recovered'] = str(int(recovered))
-                data['SIMULATION'][0]['Deceased'] = str(int(deceased))
-                data['SIMULATION'][0]['Total Population'] = str(int(total_population))
-                data['SIMULATION'][0]['Total Contagion'] = str(int(total_contagion))
-                data['SIMULATION'][0]['Total Recovered'] = str(int(recovered))
-                data['SIMULATION'][0]['Total Deceased'] = str(int(total_deceased))
-                data['SIMULATION'][0]['Total N/A'] = str(int(total_non_affected))
-                with open(reports_path+'PandeMaths-report_'+str(current_time)+'.json', 'a', encoding='utf-8') as f: # append simulation into json
-                    json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
+                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
+                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
+                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
                 break
         else: 
             if total_deceased >= starting_population: # the entire population has died! [game over!]
-                status = "FATAL!"
+                status = "FATAL! [ THE ENTIRE POPULATION HAS DIED! ]"
                 contagion = 0
                 recoveries = 0
                 deaths = 0
@@ -377,22 +381,9 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
                 total_non_affected = 0
                 print("  -> [DAY: "+str(i)+"] -> FATAL! [ THE ENTIRE POPULATION HAS DIED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")[0%] - Deaths: ("+str(int(deaths))+")[100%] - Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")[0%]")
                 print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                data['SIMULATION'][0]['DAY'] = str(i)
-                data['SIMULATION'][0]['Status'] = "FATAL! [ THE ENTIRE POPULATION HAS DIED! ]"
-                data['SIMULATION'][0]['Contagion'] = str(contagion)
-                data['SIMULATION'][0]['Recoveries'] = str(recoveries)
-                data['SIMULATION'][0]['Deaths'] = str(deaths)
-                data['SIMULATION'][0]['Susceptible'] = str(susceptible)
-                data['SIMULATION'][0]['Infected'] = str(infected)
-                data['SIMULATION'][0]['Recovered'] = str(recovered)
-                data['SIMULATION'][0]['Deceased'] = str(deceased)
-                data['SIMULATION'][0]['Total Population'] = str(total_population)
-                data['SIMULATION'][0]['Total Contagion'] = str(total_contagion)
-                data['SIMULATION'][0]['Total Recovered'] = str(total_recovered)
-                data['SIMULATION'][0]['Total Deceased'] = str(total_contagion)
-                data['SIMULATION'][0]['Total N/A'] = str(total_non_affected)
-                with open(reports_path+'PandeMaths-report_'+str(current_time)+'.json', 'a', encoding='utf-8') as f: # append simulation into json
-                    json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
+                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
+                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
+                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
                 break
     status = "FINISHED!"
     if infected == 0:
@@ -401,24 +392,87 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         contagion = 0
     print("  -> [DAY: "+str(i)+"] -> [ SIMULATION END! ]\n      Status: "+str(status))
     print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
+    export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
+    export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
+    export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
+    print("="*50 + "\n")
+    generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time) # generate final graph
+    print ("[Info] [REPORTS] (txt|json|png) -> [SAVED!] at: '"+str(reports_path+"PandeMaths-report_"+str(current_time)+"/'")+"\n")
+
+def export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
+    if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
+        os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
+    with open(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".txt"), 'a', encoding='utf-8') as f: # append into txt
+        f.write(os.linesep)
+        f.write("Day:"+str(i)+os.linesep)
+        f.write("Status:"+str(status)+os.linesep)
+        f.write("Contagion:"+str(contagion)+os.linesep)
+        f.write("Recoveries:"+str(recoveries)+os.linesep)
+        f.write("Deaths:"+str(deaths)+os.linesep)
+        f.write("Susceptible:"+str(susceptible)+os.linesep)
+        f.write("Infected:"+str(infected)+os.linesep)
+        f.write("Recovered:"+str(recovered)+os.linesep)
+        f.write("Deceased:"+str(deceased)+os.linesep)
+        f.write("Total Population:"+str(total_population)+os.linesep)
+        f.write("Total Contagion:"+str(total_contagion)+os.linesep)
+        f.write("Total Deceased:"+str(total_deceased)+os.linesep)
+        f.write("Total N/A:"+str(total_non_affected)+os.linesep)
+
+def export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
     data['SIMULATION'][0]['DAY'] = str(i)
     data['SIMULATION'][0]['Status'] = str(status)
-    data['SIMULATION'][0]['Contagion'] = str(contagion)
-    data['SIMULATION'][0]['Recoveries'] = str(recoveries)
-    data['SIMULATION'][0]['Deaths'] = str(deaths)
-    data['SIMULATION'][0]['Susceptible'] = str(susceptible)
-    data['SIMULATION'][0]['Infected'] = str(infected)
-    data['SIMULATION'][0]['Recovered'] = str(recovered)
-    data['SIMULATION'][0]['Deceased'] = str(deceased)
-    data['SIMULATION'][0]['Total Population'] = str(total_population)
-    data['SIMULATION'][0]['Total Contagion'] = str(total_contagion)
-    data['SIMULATION'][0]['Total Recovered'] = str(total_recovered)
-    data['SIMULATION'][0]['Total Deceased'] = str(total_contagion)
-    data['SIMULATION'][0]['Total N/A'] = str(total_non_affected)
-    with open(reports_path+'PandeMaths-report_'+str(current_time)+'.json', 'a', encoding='utf-8') as f: # append simulation into json
+    data['SIMULATION'][0]['Contagion'] = str(int(contagion))
+    data['SIMULATION'][0]['Recoveries'] = str(int(recoveries))
+    data['SIMULATION'][0]['Deaths'] = str(int(deaths))
+    data['SIMULATION'][0]['Susceptible'] = str(int(susceptible))
+    data['SIMULATION'][0]['Infected'] = str(int(infected))
+    data['SIMULATION'][0]['Recovered'] = str(int(recovered))
+    data['SIMULATION'][0]['Deceased'] = str(int(deceased))
+    data['SIMULATION'][0]['Total Population'] = str(int(total_population))
+    data['SIMULATION'][0]['Total Contagion'] = str(int(total_contagion))
+    data['SIMULATION'][0]['Total Recovered'] = str(int(recovered))
+    data['SIMULATION'][0]['Total Deceased'] = str(int(total_deceased))
+    data['SIMULATION'][0]['Total N/A'] = str(int(total_non_affected))
+    if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
+        os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
+    with open(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".json"), 'a', encoding='utf-8') as f: # append into json
         json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
-    print("="*50 + "\n")
-    print ("[Info] Report [SAVED!] at: "+str(reports_path+'PandeMaths-report_'+str(current_time)+'.json')+"\n")
+
+def export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
+    plot_starting_population = starting_population
+    plot_days.append(i)
+    plot_contagion.append(contagion)
+    plot_recoveries.append(recoveries)
+    plot_deaths.append(deaths)
+    plot_susceptible.append(susceptible)
+    plot_infected.append(infected)
+    plot_recovered.append(recovered)
+    plot_total_population.append(total_population)
+    plot_total_contagion.append(total_contagion)
+    plot_total_recovered.append(total_recovered)
+    plot_total_deceased.append(total_deceased)
+    plot_total_non_affected.append(total_non_affected)
+
+def generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time):
+    plt.plot(plot_days, plot_contagion, "blue", label="Contagion")
+    plt.plot(plot_days, plot_recoveries, "grey", label="Recoveries")
+    plt.plot(plot_days, plot_deaths, "orange", label="Deaths")
+    plt.plot(plot_days, plot_susceptible, "cyan", label="Susceptible")
+    plt.plot(plot_days, plot_infected, "purple", label="Infected")
+    plt.plot(plot_days, plot_recovered, "brown", label="Recovered")
+    plt.plot(plot_days, plot_total_population, "pink", label="Total Population")
+    plt.plot(plot_days, plot_total_contagion, "red", label="Total Contagion")
+    plt.plot(plot_days, plot_total_recovered, "yellow", label="Total Recovered")
+    plt.plot(plot_days, plot_total_deceased, "black", label="Total Deceased")
+    plt.plot(plot_days, plot_total_non_affected, "green", label="Total N/A")
+    plt.plot(plot_starting_population)
+    plt.title("SIMULATION: '"+str(simulation_name)+"' = Av_Ill: ["+str(average_rate_duration)+" days] - Inf_R: ["+str(probability_of_contagion)+"%] - Rec_R: ["+str(recovery_rate)+"%] - Mort: ["+str(mortality)+"%]\n\nTotal Population: ["+str(total_population)+"/"+str(starting_population)+"] - Infected (at the beginning): ["+str(infected_starting)+"] - Interaction (rate): ["+str(daily_rate_interaction)+"]\n")
+    plt.xlabel('Day(s)')
+    plt.ylabel('Individual(s)')
+    plt.legend(loc='center left', fancybox=True, bbox_to_anchor=(1, 0.5))
+    if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
+        os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
+    plt.savefig(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".png"), bbox_inches='tight')
 
 def print_banner():
     print("\n"+"="*50)

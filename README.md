@@ -45,3 +45,9 @@
 
 ![c](https://03c8.net/images/pandemaths_simulation3.png)
 
+![c](https://03c8.net/images/pandemaths_simulation6.png)
+
+![c](https://03c8.net/images/pandemaths_simulation7.png)
+
+![c](https://03c8.net/images/pandemaths_simulation5.png)
+
