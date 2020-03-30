@@ -197,9 +197,9 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         'Number of days': str(days),
         'Daily rate of interaction between individuals': str(daily_rate_interaction),
         'Average duration of illness': str(average_rate_duration),
-        'Infection rate': str(probability_of_contagion),
-        'Recovery rate': str(recovery_rate),
-        'Mortality': str(mortality),
+        'Infection rate': str(probability_of_contagion*100)+"%",
+        'Recovery rate': str(recovery_rate*100)+"%",
+        'Mortality': str(mortality*100)+"%",
         'Susceptible': str(susceptible),
         'Recovered': str(recovered),
         'Deceased': str(deceased)
@@ -218,9 +218,9 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         f.write("Number of days:"+str(days)+os.linesep)
         f.write("Daily rate of interaction between individuals:"+str(daily_rate_interaction)+os.linesep)
         f.write("Average duration of illness:"+str(average_rate_duration)+os.linesep)
-        f.write("Infection rate:"+str(probability_of_contagion)+os.linesep)
-        f.write("Recovery rate:"+str(recovery_rate)+os.linesep)
-        f.write("Mortality:"+str(mortality)+os.linesep)
+        f.write("Infection rate:"+str(probability_of_contagion*100)+"%"+os.linesep)
+        f.write("Recovery rate:"+str(recovery_rate*100)+"%"+os.linesep)
+        f.write("Mortality:"+str(mortality*100)+"%"+os.linesep)
         f.write("Susceptible:"+str(susceptible)+os.linesep)
         f.write("Recovered:"+str(recovered)+os.linesep)
         f.write("Deceased:"+str(deceased)+os.linesep)
@@ -466,7 +466,7 @@ def generate_graph(starting_population, simulation_name, infected_starting, dail
     plt.plot(plot_days, plot_total_deceased, "black", label="Total Deceased")
     plt.plot(plot_days, plot_total_non_affected, "green", label="Total N/A")
     plt.plot(plot_starting_population)
-    plt.title("SIMULATION: '"+str(simulation_name)+"' = Av_Ill: ["+str(average_rate_duration)+" days] - Inf_R: ["+str(probability_of_contagion)+"%] - Rec_R: ["+str(recovery_rate)+"%] - Mort: ["+str(mortality)+"%]\n\nTotal Population: ["+str(total_population)+"/"+str(starting_population)+"] - Infected (at the beginning): ["+str(infected_starting)+"] - Interaction (rate): ["+str(daily_rate_interaction)+"]\n")
+    plt.title("SIMULATION: '"+str(simulation_name)+"' = Av_Ill: ["+str(average_rate_duration)+" days] - Inf_R: ["+str(probability_of_contagion*100)+"%] - Rec_R: ["+str(recovery_rate*100)+"%] - Mort: ["+str(mortality*100)+"%]\n\nTotal Population: ["+str(total_population)+"/"+str(starting_population)+"] - Infected (at the beginning): ["+str(infected_starting)+"] - Interaction (rate): ["+str(daily_rate_interaction)+"]\n")
     plt.xlabel('Day(s)')
     plt.ylabel('Individual(s)')
     plt.legend(loc='center left', fancybox=True, bbox_to_anchor=(1, 0.5))
