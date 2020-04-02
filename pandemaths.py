@@ -7,8 +7,8 @@ You should have received a copy of the GNU General Public License along
 with PandeMaths; if not, write to the Free Software Foundation, Inc., 51
 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
-VERSION = "v0.3_beta"
-RELEASE = "29032020"
+VERSION = "v0.4_beta"
+RELEASE = "02042020"
 SOURCE1 = "https://code.03c8.net/epsylon/pandemaths"
 SOURCE2 = "https://github.com/epsylon/pandemaths"
 CONTACT = "epsylon@riseup.net - (https://03c8.net)"
@@ -171,15 +171,11 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
     infected = infected_starting
     susceptible_starting = int(total_population) - int(infected)
     susceptible = susceptible_starting # susceptitble at start
-    recovered = 0 # recovered individuals at start
-    deceased = 0 # deceases individuals at start
+    recoveries = 0 # recoveries individuals at start
     print("   + Susceptible: "+str(susceptible))
-    print("   + Recovered: "+str(recovered))
-    print("   + Deceased: "+str(deceased))
-    print("\n"+"-"*15+"\n")
-    print("[Info] Launching Simulation: [ "+str(simulation_name)+" ] ...\n")
-    total_contagion = 0
-    recoveries = 0
+    print("\n"+"="*50+"\n")
+    print("[Info] Launching Simulation: [ "+str(simulation_name)+" ] ...")
+    print("\n"+"="*50+"\n")
     current_time = datetime.datetime.now() # current datetime
     if not os.path.exists(reports_path): # create folder for reports
         os.makedirs(reports_path)
@@ -201,8 +197,6 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         'Recovery rate': str(recovery_rate*100)+"%",
         'Mortality': str(mortality*100)+"%",
         'Susceptible': str(susceptible),
-        'Recovered': str(recovered),
-        'Deceased': str(deceased)
         }
       ],
      'SIMULATION': [
@@ -222,11 +216,8 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
         f.write("Recovery rate:"+str(recovery_rate*100)+"%"+os.linesep)
         f.write("Mortality:"+str(mortality*100)+"%"+os.linesep)
         f.write("Susceptible:"+str(susceptible)+os.linesep)
-        f.write("Recovered:"+str(recovered)+os.linesep)
-        f.write("Deceased:"+str(deceased)+os.linesep)
         f.write("="*50+os.linesep)
     entire_population_infected = 0
-    day_started = False
     plot_starting_population = []
     plot_days = []
     plot_contagion = []
@@ -234,12 +225,13 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
     plot_deaths = []
     plot_susceptible = []
     plot_infected = []
-    plot_recovered = []
     plot_total_population = []
     plot_total_contagion = []
     plot_total_recovered = []
     plot_total_deceased = []
-    plot_total_non_affected = []
+    entire_population_infected = False
+    average_end_duration = 1
+    infected_resolving_situation = False
     for i in range(0, days):
         if i > 0:
             try:
@@ -248,158 +240,204 @@ def new_simulation(total_population, infected_starting, days, daily_rate_interac
                 status_rate = 100
             if status_rate < 11: # ENDEMIA (-11%)
                 if susceptible > 0:
-                    status = "IMPACT LEVEL: ENDEMIC!"
+                    status = "IMPACT LEVEL: [ ENDEMIC! ]"
                 else:
-                    if int(total_population*100/starting_population) > 49:
-                        status = "PRACTICALLY ERRADICATED BUT AT LEAST HALF OF THE POPULATION HAS DIED!"
+                    if int(total_deceased*100/starting_population) > 49:
+                        status = "IMPACT LEVEL: VACCINED! [ ERRADICATED BUT AT LEAST HALF OF THE POPULATION HAS DIED! ]"
                     else:
-                        status = "PRACTICALLY ERRADICATED!"
+                        status = "IMPACT LEVEL: VACCINED! [ ERRADICATED! ]"
             elif status_rate > 10 and status_rate < 25: # EPIDEMIA (>10%<25%)
                 if susceptible > 0:
-                    status = "IMPACT LEVEL: EPIDEMIC!"
+                    status = "IMPACT LEVEL: [ EPIDEMIC! ]"
                 else:
-                    status = "IMPORTANT FOCUS OF INCUBATION!"
+                    status = "IMPACT LEVEL: [ FOCUS OF INCUBATION! ]"
             else: # PANDEMIA (>25%)
                 if susceptible > 0:
-                    status = "IMPACT LEVEL: PANDEMIC!"
+                    status = "IMPACT LEVEL: [ PANDEMIC! ]"
                 else:
-                    status = "MOSTLY OF THE POPULATION IS INCUBATING!"
-            sir = susceptible+infected+recovered # S-I-R model
+                    status = "IMPACT LEVEL: [ MOSTLY INCUBATING! ]"
+            sir = susceptible+infected+recoveries # S-I-R model
             try:
                 contagion = round(infected*daily_rate_interaction*susceptible/sir*probability_of_contagion) # contagion rounded rate
             except:
                 contagion = 100
-            recoveries = round(infected*recovery_rate/average_rate_duration) # recoveries rounded rate
-            deaths = round(infected*mortality/average_rate_duration) # deaths rounded rate
-            susceptible = susceptible - contagion + recoveries - deaths
-            infected = infected+contagion-recoveries-deaths
-            recovered =recovered + recoveries
-            deceased = deceased + deaths
-            total_contagion = total_contagion + contagion
-            total_recovered = recovered
-            total_deceased = total_deceased + deaths
-            total_population = starting_population - deceased
-            total_non_affected = susceptible_starting+infected_starting+0+0-total_contagion
-            day_started = True
+            recoveries = int(infected*recovery_rate/average_rate_duration) # recoveries rounded rate
+            deaths = int(infected*mortality/average_rate_duration) # deaths rounded rate
+            susceptible = int(susceptible - contagion + recoveries - deaths)
+            infected = int(infected+contagion-recoveries-deaths)
         else: # related to the first day
-            status = "STARTED!"
+            status = "[ SIMULATION START! ]"
             contagion = 0
             recoveries = 0
             deaths = 0
             total_recovered = 0
             total_deceased = 0
-            deceased = 0
             susceptible = total_population - infected
-            recovered = 0
             total_contagion = infected_starting
-            total_non_affected = susceptible
-        if total_population < 0:
-            total_population = 0
-        if total_contagion < total_contagion < 0:
-            total_contagion = 0
-        if contagion > susceptible: # more individuals than susceptible cannot be infected
-            contagion = susceptible
-        if contagion < 1:
-            contagion = 0
-        if total_non_affected < 1: # cannot be negative non affected individuals
-            total_non_affected = 0
-        if recoveries < 1:
-            recoveries = 0
-        if susceptible + infected + recovered + deceased > starting_population:
-            susceptible = int(starting_population - infected - recovered - deceased)
-            deaths = int(recovered + deceased - starting_population)
-        if deaths < 1:
-            deaths = 0
-        if deaths > total_population:
-            deaths = total_population
-        if deaths > infected:
-            deaths = infected
-            infected = 0
-        if susceptible < 1: # cannot be negative susceptible individuals
-            susceptible = 0
-        if susceptible == 0:
-            total_non_affected = 0
-        if day_started == True:
-            if int(contagion + recoveries + deaths) == 0: # infected final resolution phase solved by random results
-                if infected > 0:
-                    deaths = random.randrange(infected)
-                if deaths > infected:
-                    infected = deaths
-                if infected == 1: # random final against Existentialism!
-                    res = random.randrange(2)
-                    if res == 1: # survive!
-                        recoveries = recoveries + 1
-                    else: # die!
-                        deaths = deaths + 1
-                infected = infected+contagion-recoveries-deaths
-                recovered = recovered + recoveries
-                total_recovered = total_recovered + recoveries
-                deceased = deceased+deaths
-        if infected > starting_population:
-            infected = starting_population
-        if total_population > 0:
-            if infected > 0:
-                if total_non_affected > 0:
-                    print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")["+str(round(contagion/total_population*100))+"%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")["+str(round(susceptible/total_population*100))+"%] - Infected: ("+str(int(infected))+")["+str(round(infected/total_population*100))+"%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
-                    print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
+        total_contagion = total_contagion + contagion
+        total_deceased = total_deceased + deaths
+        total_population = total_population - total_deceased
+        total_recovered = total_recovered + recoveries
+        if total_recovered > starting_population:
+            total_recovered = total_population
+        print("-"*75+"\n")
+        if total_population > 0: # some population still alive
+            if contagion == 0 and recoveries == 0 and deaths == 0 and total_population != starting_population: # no more interactions after starting
+                status = "IMPACT LEVEL: [ INFECTED RESOLVING THEIR SITUATION! ]"
+                if infected == 0: # no more interactions + max average_rate_duration -> end!
+                    print("="*50+"\n")
+                    report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+                    export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                    export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                    export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
                 else:
-                    if entire_population_infected == 0:
-                        total_contagion = starting_population
-                        susceptible = 0
-                        status = "ALL INFECTED !!!"
-                        print("-"*75+"\n")
-                        print("  -> [DAY: "+str(i)+"] -> [ THE ENTIRE POPULATION HAS BEEN INFECTED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
-                        entire_population_infected = entire_population_infected + 1
-                        print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                        print("-"*75+"\n")
-                    else:
-                        print("  -> [DAY: "+str(i)+"]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
-                        print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
-                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
-                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
-            else: # population has passed the pandemia
-                status = "VACCINED! [ NO MORE INFECTED! ]"
-                if entire_population_infected == 0:
-                    total_contagion = starting_population
-                print("-"*75+"\n")
-                print("  -> [DAY: "+str(i)+"] -> [ NO MORE INFECTED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[0%] - Recoveries: ("+str(int(recoveries))+")["+str(round(recoveries/total_population*100))+"%] - Deaths: ("+str(int(deaths))+")["+str(round(deaths/total_population*100))+"%] | Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[0%] - Recovered: ("+str(int(recovered))+")["+str(round(recovered/total_population*100))+"%]")
-                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                print("-"*75+"\n")
-                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
-                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
-                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
+                    infected_resolving_situation = True
+                    average_end_duration = average_end_duration + 1
+                    if average_end_duration < average_rate_duration:
+                        res = random.randrange(2)
+                        if res == 1: # more recoveries!
+                            res_rec = random.randrange(infected)
+                            recoveries = res_rec
+                            deaths = infected - recoveries
+                        else: # more deaths!
+                            res_dea = random.randrange(infected)
+                            deaths = res_dea
+                            recoveries = infected - deaths
+                        infected = 0
+                        report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+                        export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                        export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                        export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
                 break
-        else: 
-            if total_deceased >= starting_population: # the entire population has died! [game over!]
-                status = "FATAL! [ THE ENTIRE POPULATION HAS DIED! ]"
-                contagion = 0
-                recoveries = 0
-                deaths = 0
+            if total_contagion >= starting_population: # all are infected
+                total_contagion = starting_population
                 susceptible = 0
-                total_population = 0
-                total_non_affected = 0
-                print("  -> [DAY: "+str(i)+"] -> FATAL! [ THE ENTIRE POPULATION HAS DIED! ]\n      Status: "+str(status)+"\n      Contagion: ("+str(int(contagion))+")[100%] - Recoveries: ("+str(int(recoveries))+")[0%] - Deaths: ("+str(int(deaths))+")[100%] - Susceptible: ("+str(int(susceptible))+")[0%] - Infected: ("+str(int(infected))+")[100%] - Recovered: ("+str(int(recovered))+")[0%]")
-                print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
-                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
-                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
-                break
-    status = "FINISHED!"
-    if infected == 0:
-        deaths = 0
-        recoveries = 0
-        contagion = 0
-    print("  -> [DAY: "+str(i)+"] -> [ SIMULATION END! ]\n      Status: "+str(status))
-    print("      Total Population: ("+str(int(total_population))+"/"+str(int(starting_population))+") - Total Contagion: ("+str(int(total_contagion))+")["+str(round(total_contagion/starting_population*100))+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(round(total_recovered/starting_population*100))+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(round(total_deceased/starting_population*100))+"%] - Total N/A: ("+str(int(total_non_affected))+")["+str(round(total_non_affected/starting_population*100))+"%]\n")
-    export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate txt
-    export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate json
-    export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected) # generate plotting graph
-    print("="*50 + "\n")
-    generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time) # generate final graph
+                if entire_population_infected == False: # adding output markers to this event
+                    infected = total_population
+                    print("="*50+"\n")
+                    status = "IMPACT LEVEL: [ THE ENTIRE POPULATION IS INFECTED! ]"
+                    report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+                    export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                    export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                    export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased) 
+                    entire_population_infected = True
+                    print("="*50+"\n")
+                else:
+                    if infected_resolving_situation == False:
+                        status = "IMPACT LEVEL: [ SOME POPULATION IS INCUBATING! ]"
+                        report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased) 
+                        export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased) 
+                        export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                        export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+            else: # more population susceptible than infected
+                report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+                export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+                export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased) 
+        else: # no more population exposed
+            total_population = 0
+            contagion = 0
+            susceptible = 0
+            recoveries = 0
+            deaths = 0
+            if int(susceptible) > 0 and int(infected) > 0: # some have survived
+                status = "IMPACT LEVEL: VACCINED! [ BUT WITH MANY CASUALTIES! ]"
+            else: # no survivors!
+                status = "IMPACT LEVEL: [ INFECTED RESOLVING THEIR SITUATION! ]"
+                infected_resolving_situation = True
+                average_end_duration = average_end_duration + 1
+                if average_end_duration < average_rate_duration:
+                    res = random.randrange(2)
+                    if res == 1: # more recoveries!
+                        res_rec = random.randrange(infected)
+                        recoveries = res_rec
+                        deaths = infected - recoveries
+                    else: # more deaths!
+                        res_dea = random.randrange(infected)
+                        deaths = res_dea
+                        recoveries = infected - deaths
+                    infected = 0
+            print("="*75+"\n")
+            report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+            export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased) 
+            export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased) 
+            export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+            break
+    print("="*50+"\n")
+    status = "[ SIMULATION END! ]"
+    i = i + 1
+    contagion = 0
+    recoveries = 0
+    deaths = 0
+    susceptible = 0
+    infected = 0
+    report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased)
+    export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+    export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+    export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased)
+    generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time) # generate final graph
+    print("="*75+"\n")
     print ("[Info] [REPORTS] (txt|json|png) -> [SAVED!] at: '"+str(reports_path+"PandeMaths-report_"+str(current_time)+"/'")+"\n")
 
-def export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
+def extract_rates_current_day(starting_population, total_population, contagion, recoveries, deaths, total_contagion, total_recovered, total_deceased, infected, susceptible):
+    try:
+        rate_contagion = "%0.2f" % ((contagion/total_population)*100)
+    except:
+        rate_contagion = 0.00
+    try:
+        rate_recoveries = "%0.2f" % ((recoveries/infected)*100)
+    except:
+        rate_recoveries = 0.00
+    try:
+        rate_deaths = "%0.2f" % ((deaths/infected)*100)
+    except:
+        rate_deaths = 0.00
+    try:
+        rate_total_contagion = "%0.2f" % ((total_contagion/starting_population)*100)
+    except:
+        rate_total_contagion = 0.00
+    try:
+        rate_total_recovered = "%0.2f" % ((total_recovered/starting_population)*100)
+    except:
+        rate_total_recovered = 0.00
+    try:
+        rate_total_deceased = "%0.2f" % ((total_deceased/starting_population)*100)
+    except:
+        rate_total_deceased = 0.00
+    try:
+        rate_final_population = (starting_population-total_deceased)*100/starting_population
+    except:
+        rate_final_population = 0.00
+    try:
+        rate_infected = "%0.2f" % ((infected/total_population)*100)
+    except:
+        rate_infected = 0.00
+    try:
+        rate_susceptible = "%0.2f" % ((susceptible/total_population)*100)
+    except:
+        rate_susceptible = 0.00
+    if rate_recoveries == 0 and rate_deaths == 0:
+        if recoveries > 0 or deaths > 0:
+            total_alive = recoveries + deaths
+            if recoveries > 0:
+                rate_recoveries = "%0.2f" % (recoveries*100/total_alive)
+            if deaths > 0:
+                rate_deaths = "%0.2f" % (deaths*100/total_alive)
+    return rate_contagion, rate_recoveries, rate_deaths, rate_total_contagion, rate_total_recovered, rate_total_deceased, rate_final_population, rate_infected, rate_susceptible
+
+def report_current_day(i, status, contagion, total_population, recoveries, deaths, susceptible, infected, starting_population, total_contagion, total_recovered, total_deceased):
+    if susceptible > total_population:
+        susceptible = total_population
+    if infected > starting_population:
+        infected = starting_population
+    rate_contagion, rate_recoveries, rate_deaths, rate_total_contagion, rate_total_recovered, rate_total_deceased, rate_final_population, rate_infected, rate_susceptible = extract_rates_current_day(starting_population, total_population, contagion, recoveries, deaths, total_contagion, total_recovered, total_deceased, infected, susceptible) # extract current daily rates
+    print("  -> [DAY: "+str(i)+"]\n")
+    print("    -> Contagion: ("+str(int(contagion))+")["+str(rate_contagion)+"%] - [ Recoveries: ("+str(int(recoveries))+")["+str(rate_recoveries)+"%] - Deaths: ("+str(int(deaths))+")["+str(rate_deaths)+"%] ]\n")
+    print("     -> Status: "+str(status))
+    print("        * Total Population: ("+str(int(starting_population)-int(total_deceased))+"/"+str(starting_population)+")["+str(int(rate_final_population))+"%] - [ Susceptible: ("+str(int(susceptible))+")["+str(rate_susceptible)+"%] - Infected: ("+str(int(infected))+")["+str(rate_infected)+"%] ]")
+    print("        * Total Contagion: ("+str(int(total_contagion))+")["+str(rate_total_contagion)+"%] - Total Recovered: (" +str(int(total_recovered))+")["+str(rate_total_recovered)+"%] - Total Deceased: ("+str(int(total_deceased))+")["+str(rate_total_deceased)+"%]\n")
+
+def export_to_txt(current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased):
     if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
         os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
     with open(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".txt"), 'a', encoding='utf-8') as f: # append into txt
@@ -411,14 +449,12 @@ def export_to_txt(current_time, i, status, contagion, recoveries, deaths, suscep
         f.write("Deaths:"+str(deaths)+os.linesep)
         f.write("Susceptible:"+str(susceptible)+os.linesep)
         f.write("Infected:"+str(infected)+os.linesep)
-        f.write("Recovered:"+str(recovered)+os.linesep)
-        f.write("Deceased:"+str(deceased)+os.linesep)
         f.write("Total Population:"+str(total_population)+os.linesep)
         f.write("Total Contagion:"+str(total_contagion)+os.linesep)
+        f.write("Total Recovered:"+str(total_recovered)+os.linesep)
         f.write("Total Deceased:"+str(total_deceased)+os.linesep)
-        f.write("Total N/A:"+str(total_non_affected)+os.linesep)
 
-def export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, recovered, deceased, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
+def export_to_json(data, current_time, i, status, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased):
     data['SIMULATION'][0]['DAY'] = str(i)
     data['SIMULATION'][0]['Status'] = str(status)
     data['SIMULATION'][0]['Contagion'] = str(int(contagion))
@@ -426,19 +462,16 @@ def export_to_json(data, current_time, i, status, contagion, recoveries, deaths,
     data['SIMULATION'][0]['Deaths'] = str(int(deaths))
     data['SIMULATION'][0]['Susceptible'] = str(int(susceptible))
     data['SIMULATION'][0]['Infected'] = str(int(infected))
-    data['SIMULATION'][0]['Recovered'] = str(int(recovered))
-    data['SIMULATION'][0]['Deceased'] = str(int(deceased))
     data['SIMULATION'][0]['Total Population'] = str(int(total_population))
     data['SIMULATION'][0]['Total Contagion'] = str(int(total_contagion))
-    data['SIMULATION'][0]['Total Recovered'] = str(int(recovered))
+    data['SIMULATION'][0]['Total Recovered'] = str(int(total_recovered))
     data['SIMULATION'][0]['Total Deceased'] = str(int(total_deceased))
-    data['SIMULATION'][0]['Total N/A'] = str(int(total_non_affected))
     if not os.path.exists(reports_path+"PandeMaths-report_"+str(current_time)): # create folder for reports
         os.makedirs(reports_path+"PandeMaths-report_"+str(current_time))
     with open(reports_path+"PandeMaths-report_"+str(current_time)+"/"+str("PandeMaths-report_"+str(current_time)+".json"), 'a', encoding='utf-8') as f: # append into json
         json.dump(data, f, ensure_ascii=False, sort_keys=False, indent=4)
 
-def export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, recovered, total_population, total_contagion, total_recovered, total_deceased, total_non_affected):
+def export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time, starting_population, i, contagion, recoveries, deaths, susceptible, infected, total_population, total_contagion, total_recovered, total_deceased):
     plot_starting_population = starting_population
     plot_days.append(i)
     plot_contagion.append(contagion)
@@ -446,25 +479,21 @@ def export_to_graph(plot_starting_population, plot_days, plot_contagion, plot_re
     plot_deaths.append(deaths)
     plot_susceptible.append(susceptible)
     plot_infected.append(infected)
-    plot_recovered.append(recovered)
     plot_total_population.append(total_population)
     plot_total_contagion.append(total_contagion)
     plot_total_recovered.append(total_recovered)
     plot_total_deceased.append(total_deceased)
-    plot_total_non_affected.append(total_non_affected)
 
-def generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_recovered, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, plot_total_non_affected, current_time):
+def generate_graph(starting_population, simulation_name, infected_starting, daily_rate_interaction, average_rate_duration, probability_of_contagion, recovery_rate, mortality, total_population, plot_starting_population, plot_days, plot_contagion, plot_recoveries, plot_deaths, plot_susceptible, plot_infected, plot_total_population, plot_total_contagion, plot_total_recovered, plot_total_deceased, current_time):
     plt.plot(plot_days, plot_contagion, "blue", label="Contagion")
     plt.plot(plot_days, plot_recoveries, "grey", label="Recoveries")
     plt.plot(plot_days, plot_deaths, "orange", label="Deaths")
     plt.plot(plot_days, plot_susceptible, "cyan", label="Susceptible")
     plt.plot(plot_days, plot_infected, "purple", label="Infected")
-    plt.plot(plot_days, plot_recovered, "brown", label="Recovered")
     plt.plot(plot_days, plot_total_population, "pink", label="Total Population")
     plt.plot(plot_days, plot_total_contagion, "red", label="Total Contagion")
     plt.plot(plot_days, plot_total_recovered, "yellow", label="Total Recovered")
     plt.plot(plot_days, plot_total_deceased, "black", label="Total Deceased")
-    plt.plot(plot_days, plot_total_non_affected, "green", label="Total N/A")
     plt.plot(plot_starting_population)
     plt.title("SIMULATION: '"+str(simulation_name)+"' = Av_Ill: ["+str(average_rate_duration)+" days] - Inf_R: ["+str(probability_of_contagion*100)+"%] - Rec_R: ["+str(recovery_rate*100)+"%] - Mort: ["+str(mortality*100)+"%]\n\nTotal Population: ["+str(total_population)+"/"+str(starting_population)+"] - Infected (at the beginning): ["+str(infected_starting)+"] - Interaction (rate): ["+str(daily_rate_interaction)+"]\n")
     plt.xlabel('Day(s)')

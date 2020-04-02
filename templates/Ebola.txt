@@ -1,3 +1,3 @@
-duration:25
+duration:90
 contagion:91
 recov:9

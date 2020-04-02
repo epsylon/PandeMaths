@@ -1,0 +1,3 @@
+duration:8
+contagion:87
+recov:73

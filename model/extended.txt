@@ -7,6 +7,7 @@ B:Average birth rate
 M:Infants with passive immunity
 δ:Average time of temporary immunity
 1/ε:Average incubation time
+Vac:Vaccine development duration
 Hp:Level of previous health status of the population
 rIm:Collective Immunity Ratio
 PoVp:Poverty level of the population
